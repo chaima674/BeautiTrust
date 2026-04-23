@@ -1,0 +1,148 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeautiTrust - Landing Page</title>
+    <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<header class="navbar">
+    <img src="{% static 'images/beautitrustlogo.png' %}" alt="BeautiTrust Logo" class="logo-img">
+    <nav class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#why">Why Us</a>
+        <a href="#how">How It Works</a>
+    </nav>
+</header>
+
+<!-- ================= HERO SECTION ================= -->
+<section class="hero" id="home">
+    <div class="hero-content">
+        <h1>The Best Glow-Up of Your <br> Life Starts Here!</h1>
+        <p class="hero-quote">
+            “Beauty Your Way. Let BeautiTrust guide you to the perfect salons, products, and tips, all backed by real reviews and smart suggestions.”
+        </p>
+        <a href="{% url 'home' %}" class="hero-btn">
+            Sign In Your BeautyJourney →
+        </a>
+    </div>
+</section>
+
+<!-- ================= ABOUT SECTION ================= -->
+<section id="about" class="about-section section">
+    <div class="about-container">
+        <h2 class="about-title">About BeautiTrust</h2>
+        <p class="about-description">
+            BeautiTrust is your ultimate beauty companion. We provide accurate and up-to-date information on salons, barbershops, spas, and beauty products, enabling you to make informed decisions. Our platform offers smart comparisons between services and products, helping you quickly find what suits your style and needs. With personalized recommendations, we guide you to options tailored specifically to your beauty preferences, lifestyle, and goals. Discover, compare, and experience the best beauty services with confidence and ease.
+        </p>
+        <div class="about-cards">
+            <div class="feature-card">
+                <h3>Accurate Data</h3>
+                <p>All information on services and products is verified for quality and reliability.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Smart Comparison</h3>
+                <p>Compare services and products easily to find what suits your preferences best.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Personalized Choices</h3>
+                <p>Get recommendations tailored specifically to your style, needs, and lifestyle.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ================= WHY US SECTION ================= -->
+<section class="why-us-section section" id="why">
+    <div class="why-us-container">
+        <div class="why-us-icons">
+            <div class="icon-item">
+                <img src="{% static 'images/reliability.png' %}" alt="Trusted Sources">
+                <h3>Trusted Sources</h3>
+                <p>We only provide verified information.</p>
+            </div>
+            <div class="icon-item">
+                <img src="{% static 'images/world-in-your-hands.png' %}" alt="Everything in One Place">
+                <h3>All in One</h3>
+                <p>Find everything about beauty services here.</p>
+            </div>
+            <div class="icon-item">
+                <img src="{% static 'images/star.png' %}" alt="Personalized Choices">
+                <h3>Personalized</h3>
+                <p>Recommendations tailored to you.</p>
+            </div>
+            <div class="icon-item">
+                <img src="{% static 'images/love.png' %}" alt="Your Satisfaction">
+                <h3>Your Satisfaction</h3>
+                <p>We prioritize your beauty journey.</p>
+            </div>
+        </div>
+        <div class="why-us-text">
+            <h2>Why Choose BeautiTrust?</h2>
+            <p>
+                BeautiTrust gathers reliable, up-to-date beauty information in one place, saving you time and effort. Our trusted sources, personalized suggestions, and easy-to-navigate platform ensure your journey to looking and feeling your best is seamless and enjoyable.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= HOW IT WORKS SECTION ================= -->
+<section id="how" class="how-it-works section">
+    <h2>How It Works?</h2>
+    <div class="how-cards">
+        <!-- Step 1: Set Preferences -->
+        <div class="how-card">
+            <img src="{% static 'images/assessment.png' %}" alt="Preferences Icon">
+            <h3>Set Your Preferences</h3>
+            <p>Fill out a simple form to let us know your beauty style, favorite services, and preferred products.</p>
+            <form class="preference-form">
+                <input type="text" placeholder="Your Name">
+                <select>
+                    <option selected disabled>Choose Your Preferences</option>
+                    <option>Hair</option>
+                    <option>Skin</option>
+                    <option>Nails</option>
+                    <option>Makeup</option>
+                </select>
+                <button type="submit">Save Preferences</button>
+            </form>
+        </div>
+        <!-- Step 2: Search -->
+        <div class="how-card">
+            <img src="{% static 'images/loupe.png' %}" alt="Search Icon">
+            <h3>Search Services & Products</h3>
+            <p>Easily search for salons, products, and services that match your beauty preferences in one place.</p>
+        </div>
+        <!-- Step 3: Favorites -->
+        <div class="how-card">
+            <img src="{% static 'images/favourite.png' %}" alt="Favorites Icon">
+            <h3>Add to Favorites</h3>
+            <p>Collect your favorite services and products by clicking the heart icon to save them for later.</p>
+        </div>
+        <!-- Step 4: Book & Enjoy -->
+        <div class="how-card">
+            <img src="{% static 'images/check-out.png' %}" alt="Booking Icon">
+            <h3>Book & Enjoy</h3>
+            <p>Book your chosen services directly through our platform and enjoy your beauty experience.</p>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div>© 2025 BeautiTrust — All rights reserved</div>
+    <div class="footer-text">Designed to help you find the best beauty experiences</div>
+    <div class="footer-contact">
+        <p>Email: info@beautitrust.com</p>
+    </div>
+</footer>
+
+<script src="{% static 'js/howitworks.js' %}"></script>
+<script src="{% static 'js/landing.js' %}"></script>
+
+</body>
+</html>
