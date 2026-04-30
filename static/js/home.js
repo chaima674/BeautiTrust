@@ -92,40 +92,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 container.innerHTML = "";
 
-                // ===== Beauty Spots =====
-                if (target === "beauty-spots") {
-                    beautySpots.forEach(spot => {
-                        container.innerHTML += `
-                            <div class="card">
-                                <img src="${getStaticPath(spot.image)}">
-                                <h3>${spot.name}</h3>
-                                <p>${spot.description}</p>
-                                <p>⭐ ${spot.rating}</p>
-                                <p>${spot.services.join(", ")}</p>
-                                <button onclick="addToCart('spot', ${spot.id})">🛒</button>
-                                <button onclick="addToWishlist('spot', ${spot.id})">❤️</button>
-                            </div>
-                        `;
-                    });
-                    addFinishedButton(container, target);
-                }
+             // ===== Beauty Spots =====
+if (target === "beauty-spots") {
+    // Fetch data from API instead of using static beautySpots
+    fetch('/api/spots/')
+        .then(response => response.json())
+        .then(beautySpots => {
+            beautySpots.forEach(spot => {
+                container.innerHTML += `
+                    <div class="card">
+                        <img src="${spot.image_url}">
+                        <h3>${spot.name}</h3>
+                        <p>${spot.description}</p>
+                        <p>⭐ ${spot.rating}</p>
+                        <button onclick="addToCart('spot', ${spot.id})">🛒</button>
+                        <button onclick="addToWishlist('spot', ${spot.id})">❤️</button>
+                    </div>
+                `;
+            });
+            addFinishedButton(container, target);
+        });
+}
 
-                // ===== Products =====
-                if (target === "products") {
-                    products.forEach(prod => {
-                        container.innerHTML += `
-                            <div class="card">
-                                <img src="${getStaticPath(prod.image)}">
-                                <h3>${prod.name}</h3>
-                                <p>${prod.description}</p>
-                                <p>${prod.price} DT</p>
-                                <button onclick="addToCart('product', ${prod.id})">🛒</button>
-                                <button onclick="addToWishlist('product', ${prod.id})">❤️</button>
-                            </div>
-                        `;
-                    });
-                    addFinishedButton(container, target);
-                }
+               // ===== Products =====
+if (target === "products") {
+    // Fetch data from API instead of using static products
+    fetch('/api/products/')
+        .then(response => response.json())
+        .then(products => {
+            products.forEach(product => {
+                container.innerHTML += `
+                    <div class="card">
+                        <img src="${product.image_url}">
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        <p>${product.price} DT</p>
+                        <button onclick="addToCart('product', ${product.id})">🛒</button>
+                        <button onclick="addToWishlist('product', ${product.id})">❤️</button>
+                    </div>
+                `;
+            });
+            addFinishedButton(container, target);
+        });
+}
 
                 // ===== Personalized Advice =====
                 if (target === "personalized-advice") {

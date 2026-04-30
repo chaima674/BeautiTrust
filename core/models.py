@@ -29,7 +29,7 @@ class BeautySpot(models.Model):
     rating = models.DecimalField(max_digits=3, decimal_places=2)
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
-    image_url = models.URLField()
+    image_url = models.CharField(max_length=500)
 
     provider = models.ForeignKey(
         User,
@@ -44,7 +44,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    image_url = models.URLField()
+    image_url = models.CharField(max_length=500)
 
     category = models.ForeignKey(
         Category,
