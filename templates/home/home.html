@@ -37,7 +37,7 @@
                 <i class="far fa-heart"></i>
                 <i class="fas fa-shopping-cart"></i>
                 {% if request.session.user_id %}
-                    <a href="{% url 'logout' %}" style="color: #ffb6c1; text-decoration: none; margin-left: 15px; font-size: 16px; transition: all 0.3s ease;" 
+                    <a href="{% url 'logout' %}" onclick="localStorage.removeItem('prefChoice'); localStorage.removeItem('prefName');" style="color: #ffb6c1; text-decoration: none; margin-left: 15px; font-size: 16px; transition: all 0.3s ease;" 
                        onmouseover="this.style.color='#ff69b4'; this.style.transform='scale(1.05)'" 
                        onmouseout="this.style.color='#ffb6c1'; this.style.transform='scale(1)'">
                         <i class="fas fa-sign-out-alt" style="margin-right: 5px;"></i> Logout
@@ -119,11 +119,15 @@
     </div>
 
     <script>
-        // Get saved preference
-        const prefChoice = localStorage.getItem('prefChoice');
-        const prefName = localStorage.getItem('prefName');
+        // Get preference from Django session (passed from views.py)
+        const prefChoice = "{{ prefChoice|default:'' }}";
+        const prefName = "{{ prefName|default:'' }}";
         
         if (prefChoice && prefName) {
+            // Save to localStorage for JavaScript filtering
+            localStorage.setItem('prefChoice', prefChoice);
+            localStorage.setItem('prefName', prefName);
+            
             const banner = document.getElementById('preferenceBanner');
             const message = document.getElementById('prefMessage');
             
@@ -140,7 +144,6 @@
             message.innerHTML = `${emoji} ${prefName}, we're showing you ${categoryMessage}! ${emoji}`;
             banner.style.display = 'block';
             
-            // Auto-hide after 5 seconds
             setTimeout(() => {
                 banner.style.display = 'none';
             }, 5000);

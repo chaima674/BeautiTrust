@@ -60,3 +60,11 @@ def api_register(request):
 def check_auth(request):
     user_id = request.session.get('user_id')
     return JsonResponse({'is_authenticated': user_id is not None})
+@csrf_exempt
+def save_preference(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        request.session['prefChoice'] = data.get('preference')
+        request.session['prefName'] = data.get('name')
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})

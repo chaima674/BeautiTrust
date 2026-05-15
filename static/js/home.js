@@ -287,7 +287,17 @@ document.addEventListener("DOMContentLoaded", () => {
         openModal("Cart", html);
 
         document.querySelectorAll(".confirm-item-btn").forEach(btn => {
-            btn.onclick = () => {
+            btn.onclick = async () => {
+                // Check if user is logged in
+                const authResponse = await fetch('/api/check-auth/');
+                const authData = await authResponse.json();
+                
+                if (!authData.is_authenticated) {
+                    alert("Please login first to confirm booking!");
+                    window.location.href = '/login/';
+                    return;
+                }
+                
                 const index = btn.dataset.index;
                 const item = cart[index];
                 platformEarnings += (item.price || 50) * COMMISSION_RATE;

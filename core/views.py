@@ -8,7 +8,10 @@ def landing(request):
     return render(request, 'landing/index.html')
 
 def home(request):
-    return render(request, 'home/home.html')
+    return render(request, 'home/home.html', {
+        'prefChoice': request.session.get('prefChoice', ''),
+        'prefName': request.session.get('prefName', '')
+    })
 
 def register_view(request):
     if request.method == 'POST':
@@ -19,35 +22,46 @@ def register_view(request):
             messages.success(request, f'Welcome {user.full_name}!')
             return redirect('home')
         else:
-            print(form.errors)  # Debug: see errors in terminal
+            print(form.errors)
     else:
         form = RegisterForm()
     return render(request, 'registration/register.html', {'form': form})
+
 def login_view(request):
+    # Get preference from URL
+    pref = request.GET.get('pref', '')
+    name = request.GET.get('name', '')
+    
+    print(f"DEBUG: pref from URL = {pref}, name = {name}")
+    
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
-        print(f"Login attempt: {email}")  # Debug print
-        
         try:
             user = User.objects.get(email=email)
-            print(f"User found: {user.full_name}")  # Debug print
-            print(f"Password in DB: {user.password_hash}")  # Debug print
-            
             if check_password(password, user.password_hash):
                 request.session['user_id'] = user.id
+                
+                # Save preference if it exists in URL
+                if pref and name:
+                    request.session['prefChoice'] = pref
+                    request.session['prefName'] = name
+                    print(f"DEBUG: Saved to session - prefChoice={pref}, prefName={name}")
+                
                 messages.success(request, f'Welcome back {user.full_name}!')
-                print("Login successful!")  # Debug print
                 return redirect('home')
             else:
-                print("Password incorrect")  # Debug print
                 messages.error(request, 'Invalid password')
         except User.DoesNotExist:
-            print("User not found")  # Debug print
             messages.error(request, 'Email not found')
-    
     return render(request, 'registration/login.html')
+
 def logout_view(request):
+    # Clear preferences from session
+    if 'prefChoice' in request.session:
+        del request.session['prefChoice']
+    if 'prefName' in request.session:
+        del request.session['prefName']
     if 'user_id' in request.session:
         del request.session['user_id']
     return redirect('landing')
