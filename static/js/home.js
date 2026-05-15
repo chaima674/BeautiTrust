@@ -8,6 +8,54 @@ document.addEventListener("DOMContentLoaded", () => {
     const wishlist = [];
     const userAnswers = {};
 
+    // ===== USER PREFERENCE FOR FILTERING =====
+    const userPreference = localStorage.getItem('prefChoice');
+    
+    function filterBeautySpotsByPreference(spots) {
+        if (!userPreference) return spots;
+        
+        const keywordMap = {
+            'Hair': ['Haircut', 'Hair Coloring', 'Hair Styling', 'Hair'],
+            'Skin': ['Facial', 'Skin', 'Massage', 'Wellness', 'Body Scrub', 'Relaxation'],
+            'Nails': ['Manicure', 'Pedicure', 'Nail Art', 'Gel Polish', 'Nail'],
+            'Makeup': ['Makeup', 'Beauty']
+        };
+        
+        const keywords = keywordMap[userPreference] || [];
+        if (keywords.length === 0) return spots;
+        
+        const filtered = spots.filter(spot => {
+            if (spot.services && spot.services.length) {
+                return spot.services.some(service => 
+                    keywords.some(keyword => service.toLowerCase().includes(keyword.toLowerCase()))
+                );
+            }
+            return false;
+        });
+        
+        return filtered.length > 0 ? filtered : spots;
+    }
+    
+    function filterProductsByPreference(prods) {
+        if (!userPreference) return prods;
+        
+        const categoryMap = {
+            'Hair': 'Haircare',
+            'Skin': 'Skincare',
+            'Nails': 'Nails',
+            'Makeup': 'Makeup'
+        };
+        
+        const targetCategory = categoryMap[userPreference];
+        if (!targetCategory) return prods;
+        
+        const filtered = prods.filter(product => 
+            product.category && product.category.toLowerCase() === targetCategory.toLowerCase()
+        );
+        
+        return filtered.length > 0 ? filtered : prods;
+    }
+
     // ===== Commission Logic =====
     let platformEarnings = 0;
     const COMMISSION_RATE = 0.05;
@@ -34,7 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.onclick = e => { if (e.target === modal) modal.style.display = "none"; };
     }
 
-    // ===== Scroll Logic =====
     function activateSection(targetId) {
         if (glowTimeout) clearTimeout(glowTimeout);
         sections.forEach(section => section.classList.remove("active"));
@@ -51,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
         glowTimeout = setTimeout(() => target.classList.remove("active"), 3000);
     }
 
-    // ===== Navbar Links =====
     navLinks.forEach(link => {
         link.addEventListener("click", e => {
             e.preventDefault();
@@ -59,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ===== Close Button =====
     function addFinishedButton(container, sectionId) {
         const btn = document.createElement("button");
         btn.className = "close-btn";
@@ -75,12 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
         container.appendChild(btn);
     }
 
-    // Function to get static path
-    function getStaticPath(path) {
-        return window.location.origin + '/static/' + path;
-    }
-
-    // ===== Section Buttons =====
     function attachSectionButtons() {
         document.querySelectorAll(".content-text button").forEach(button => {
             button.onclick = () => {
@@ -92,49 +131,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 container.innerHTML = "";
 
-             // ===== Beauty Spots =====
-if (target === "beauty-spots") {
-    // Fetch data from API instead of using static beautySpots
-    fetch('/api/spots/')
-        .then(response => response.json())
-        .then(beautySpots => {
-            beautySpots.forEach(spot => {
-                container.innerHTML += `
-                    <div class="card">
-                        <img src="${spot.image_url}">
-                        <h3>${spot.name}</h3>
-                        <p>${spot.description}</p>
-                        <p>⭐ ${spot.rating}</p>
-                        <button onclick="addToCart('spot', ${spot.id})">🛒</button>
-                        <button onclick="addToWishlist('spot', ${spot.id})">❤️</button>
-                    </div>
-                `;
-            });
-            addFinishedButton(container, target);
-        });
-}
+                // ===== Beauty Spots (WITH FILTERING) =====
+                if (target === "beauty-spots") {
+                    let spotsToShow = filterBeautySpotsByPreference(beautySpots);
+                    console.log('Showing', spotsToShow.length, 'spots out of', beautySpots.length);
+                    spotsToShow.forEach(spot => {
+                        container.innerHTML += `
+                            <div class="card">
+                                <img src="${spot.image}">
+                                <h3>${spot.name}</h3>
+                                <p>${spot.description}</p>
+                                <p>⭐ ${spot.rating}</p>
+                                <p>${spot.services.join(", ")}</p>
+                                <button onclick="addToCart('spot', ${spot.id})">🛒</button>
+                                <button onclick="addToWishlist('spot', ${spot.id})">❤️</button>
+                            </div>
+                        `;
+                    });
+                    addFinishedButton(container, target);
+                }
 
-               // ===== Products =====
-if (target === "products") {
-    // Fetch data from API instead of using static products
-    fetch('/api/products/')
-        .then(response => response.json())
-        .then(products => {
-            products.forEach(product => {
-                container.innerHTML += `
-                    <div class="card">
-                        <img src="${product.image_url}">
-                        <h3>${product.name}</h3>
-                        <p>${product.description}</p>
-                        <p>${product.price} DT</p>
-                        <button onclick="addToCart('product', ${product.id})">🛒</button>
-                        <button onclick="addToWishlist('product', ${product.id})">❤️</button>
-                    </div>
-                `;
-            });
-            addFinishedButton(container, target);
-        });
-}
+                // ===== Products (WITH FILTERING) =====
+                if (target === "products") {
+                    let productsToShow = filterProductsByPreference(products);
+                    console.log('Showing', productsToShow.length, 'products out of', products.length);
+                    productsToShow.forEach(prod => {
+                        container.innerHTML += `
+                            <div class="card">
+                                <img src="${prod.image}">
+                                <h3>${prod.name}</h3>
+                                <p>${prod.description}</p>
+                                <p>${prod.price} DT</p>
+                                <button onclick="addToCart('product', ${prod.id})">🛒</button>
+                                <button onclick="addToWishlist('product', ${prod.id})">❤️</button>
+                            </div>
+                        `;
+                    });
+                    addFinishedButton(container, target);
+                }
 
                 // ===== Personalized Advice =====
                 if (target === "personalized-advice") {
@@ -179,29 +213,6 @@ if (target === "products") {
 
                     function showFinalRecommendation() {
                         liveAdviceEl.innerHTML = `<h4>Your Personalized Recommendations ✨</h4>`;
-
-                        const careSpots = beautySpots.filter(spot =>
-                            spot.services.some(s => !s.toLowerCase().includes("makeup"))
-                        );
-                        const spot = careSpots.length ? careSpots[Math.floor(Math.random() * careSpots.length)] : beautySpots[0];
-
-                        const careProducts = products.filter(p => p.category === "Skincare" || p.category === "Haircare");
-                        const product = careProducts.length ? careProducts[Math.floor(Math.random() * careProducts.length)] : products[0];
-
-                        liveAdviceEl.innerHTML += `
-                        <div class="card">
-                            <h3>Recommended Spot: ${spot.name}</h3>
-                            <p>${spot.description}</p>
-                            <p>⭐ ${spot.rating}</p>
-                        </div>`;
-
-                        liveAdviceEl.innerHTML += `
-                        <div class="card">
-                            <h3>Recommended Product: ${product.name}</h3>
-                            <p>${product.description}</p>
-                            <p>${product.price} DT</p>
-                        </div>`;
-
                         liveAdviceEl.innerHTML += `<button onclick="restartAdvice()">Get New Advice</button>`;
                     }
 
@@ -230,7 +241,6 @@ if (target === "products") {
         });
     }
 
-    // ===== Cart & Wishlist =====
     window.addToCart = function (type, id) {
         const item = type === "spot" ? beautySpots.find(s => s.id === id) : products.find(p => p.id === id);
         if (!cart.includes(item)) cart.push(item);
@@ -252,7 +262,6 @@ if (target === "products") {
         }
     };
 
-    // ===== Navbar Icons =====
     document.querySelector(".fa-magnifying-glass").onclick = () => {
         const term = prompt("Enter search term:");
         if (!term) return;
@@ -290,7 +299,6 @@ if (target === "products") {
         });
     };
 
-    // ===== Init =====
     attachSectionButtons();
 
 });
