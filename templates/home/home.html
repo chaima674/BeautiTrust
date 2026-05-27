@@ -37,10 +37,16 @@
                 <i class="far fa-heart"></i>
                 <i class="fas fa-shopping-cart"></i>
                 {% if request.session.user_id %}
-                    <a href="{% url 'logout' %}" onclick="localStorage.removeItem('prefChoice'); localStorage.removeItem('prefName');" style="color: #ffb6c1; text-decoration: none; margin-left: 15px; font-size: 16px; transition: all 0.3s ease;" 
+                    <a href="#" onclick="logoutAndClear(); return false;" style="color: #ffb6c1; text-decoration: none; margin-left: 15px; font-size: 16px; transition: all 0.3s ease;" 
                        onmouseover="this.style.color='#ff69b4'; this.style.transform='scale(1.05)'" 
                        onmouseout="this.style.color='#ffb6c1'; this.style.transform='scale(1)'">
                         <i class="fas fa-sign-out-alt" style="margin-right: 5px;"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="/login/" style="color: #ffb6c1; text-decoration: none; margin-left: 15px; font-size: 16px; transition: all 0.3s ease;" 
+                       onmouseover="this.style.color='#ff69b4'; this.style.transform='scale(1.05)'" 
+                       onmouseout="this.style.color='#ffb6c1'; this.style.transform='scale(1)'">
+                        <i class="fas fa-sign-in-alt" style="margin-right: 5px;"></i> Login
                     </a>
                 {% endif %}
             </div>
@@ -80,14 +86,14 @@
             </div>
         </div>
 
-        <!-- Third Part: Image Left -->
+        <!-- Third Part: Image Left (AUTHENTICATION CHECK ADDED) -->
         <div class="section" id="personalized-advice">
             <div class="content-item left">
                 <img src="{% static 'images/advice.jpg' %}" alt="Advice">
                 <div class="content-text">
                     <p>"Answer a few questions and receive personalized beauty tips and product recommendations based on
                         your needs and preferences."</p>
-                    <button data-target="personalized-advice">Get Your Advice</button>
+                    <button data-target="personalized-advice" onclick="checkAuthAndShowAdvice()">Get Your Advice</button>
                     <div id="advice-container"></div>
                 </div>
             </div>
@@ -118,13 +124,52 @@
         </div>
     </div>
 
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px; background: white; padding: 30px; border-radius: 15px;">
+            <span class="modal-close" onclick="closeReviewModal()" style="float: right; cursor: pointer; font-size: 25px;">&times;</span>
+            <h3 style="color: #6a0734; margin-bottom: 20px;">Write a Review</h3>
+            <input type="hidden" id="reviewSpotId">
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 10px;">Rating:</label>
+                <div id="ratingStars" style="font-size: 35px; cursor: pointer;">
+                    <span data-rating="1" style="color: #ccc;">☆</span>
+                    <span data-rating="2" style="color: #ccc;">☆</span>
+                    <span data-rating="3" style="color: #ccc;">☆</span>
+                    <span data-rating="4" style="color: #ccc;">☆</span>
+                    <span data-rating="5" style="color: #ccc;">☆</span>
+                </div>
+                <input type="hidden" id="ratingValue" value="0">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 10px;">Your Comment:</label>
+                <textarea id="reviewComment" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" placeholder="Share your experience..."></textarea>
+            </div>
+            
+            <button onclick="submitReview()" style="width: 100%; padding: 12px; background: #EF78C4; color: white; border: none; border-radius: 5px; cursor: pointer;">Submit Review</button>
+            <div id="reviewMessage" style="color: red; margin-top: 10px; text-align: center;"></div>
+        </div>
+    </div>
+
     <script>
+        // ===== LOGOUT FUNCTION =====
+        function logoutAndClear() {
+            // Clear localStorage
+            localStorage.removeItem('beautitrist_cart');
+            localStorage.removeItem('beautitrist_wishlist');
+            localStorage.removeItem('prefChoice');
+            localStorage.removeItem('prefName');
+            // Redirect to logout
+            window.location.href = '/logout/';
+        }
+        
         // Get preference from Django session (passed from views.py)
         const prefChoice = "{{ prefChoice|default:'' }}";
         const prefName = "{{ prefName|default:'' }}";
         
         if (prefChoice && prefName) {
-            // Save to localStorage for JavaScript filtering
             localStorage.setItem('prefChoice', prefChoice);
             localStorage.setItem('prefName', prefName);
             
@@ -147,6 +192,144 @@
             setTimeout(() => {
                 banner.style.display = 'none';
             }, 5000);
+        }
+        
+        // ===== REVIEW SYSTEM =====
+        let selectedRating = 0;
+        let currentSpotId = null;
+        
+        // Star rating handler
+        const stars = document.querySelectorAll('#ratingStars span');
+        if (stars.length) {
+            stars.forEach(star => {
+                star.onmouseover = function() {
+                    const rating = parseInt(this.dataset.rating);
+                    stars.forEach((s, i) => {
+                        if (i < rating) {
+                            s.innerHTML = '★';
+                            s.style.color = '#FFD700';
+                        } else {
+                            s.innerHTML = '☆';
+                            s.style.color = '#ccc';
+                        }
+                    });
+                };
+                
+                star.onmouseout = function() {
+                    stars.forEach((s, i) => {
+                        if (i < selectedRating) {
+                            s.innerHTML = '★';
+                            s.style.color = '#FFD700';
+                        } else {
+                            s.innerHTML = '☆';
+                            s.style.color = '#ccc';
+                        }
+                    });
+                };
+                
+                star.onclick = function() {
+                    selectedRating = parseInt(this.dataset.rating);
+                    document.getElementById('ratingValue').value = selectedRating;
+                    stars.forEach((s, i) => {
+                        if (i < selectedRating) {
+                            s.innerHTML = '★';
+                            s.style.color = '#FFD700';
+                        } else {
+                            s.innerHTML = '☆';
+                            s.style.color = '#ccc';
+                        }
+                    });
+                };
+            });
+        }
+        
+        function showReviewModal(spotId) {
+            fetch('/api/check-auth/')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.is_authenticated) {
+                        alert("Please login to leave a review!");
+                        window.location.href = '/login/';
+                        return;
+                    }
+                    currentSpotId = spotId;
+                    document.getElementById('reviewSpotId').value = spotId;
+                    document.getElementById('reviewComment').value = '';
+                    selectedRating = 0;
+                    document.getElementById('ratingValue').value = 0;
+                    document.getElementById('reviewMessage').innerHTML = '';
+                    const stars2 = document.querySelectorAll('#ratingStars span');
+                    stars2.forEach(s => {
+                        s.innerHTML = '☆';
+                        s.style.color = '#ccc';
+                    });
+                    document.getElementById('reviewModal').style.display = 'flex';
+                });
+        }
+        
+        function closeReviewModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+        }
+        
+        function submitReview() {
+            if (selectedRating === 0) {
+                document.getElementById('reviewMessage').innerHTML = 'Please select a rating';
+                return;
+            }
+            const comment = document.getElementById('reviewComment').value;
+            if (!comment.trim()) {
+                document.getElementById('reviewMessage').innerHTML = 'Please write a comment';
+                return;
+            }
+            
+            fetch('/api/add-review/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    beautyspot_id: currentSpotId,
+                    rating: selectedRating,
+                    comment: comment
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Thank you for your review!');
+                    closeReviewModal();
+                    // Refresh beauty spots
+                    const btn = document.querySelector('[data-target="beauty-spots"]');
+                    if (btn) btn.click();
+                } else {
+                    document.getElementById('reviewMessage').innerHTML = data.error;
+                }
+            });
+        }
+
+        // ===== PENDING PREFERENCE AFTER LOGIN =====
+        const pending = sessionStorage.getItem('pendingPreference');
+        if (pending) {
+            sessionStorage.removeItem('pendingPreference');
+            fetch('/api/check-auth/')
+                .then(res => res.json())
+                .then(auth => {
+                    if (auth.is_authenticated) {
+                        const { name, preference } = JSON.parse(pending);
+                        fetch('/api/save-user-preference/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name, preference })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log("Preference saved to database after login.");
+                            } else {
+                                console.error("Failed to save preference:", data.error);
+                            }
+                        })
+                        .catch(err => console.error("Error saving preference:", err));
+                    }
+                });
         }
     </script>
 

@@ -65,3 +65,7 @@ def logout_view(request):
     if 'user_id' in request.session:
         del request.session['user_id']
     return redirect('landing')
+def spot_detail(request, spot_id):
+    return render(request, 'spot_detail.html', {'spot_id': spot_id})
+def product_detail(request, product_id):
+    return render(request, 'product_detail.html', {'product_id': product_id})

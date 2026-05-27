@@ -1,8 +1,5 @@
 from django.db import models
 
-
-
-
 class User(models.Model):
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -117,6 +114,13 @@ class Cart(models.Model):
 
     service = models.ForeignKey(
         Service,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    beautyspot = models.ForeignKey(
+        BeautySpot,
         on_delete=models.CASCADE,
         null=True,
         blank=True
@@ -247,3 +251,25 @@ class Preference(models.Model):
 
     def __str__(self):
         return f"{self.user.full_name} preference"
+
+class ProductReview(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="product_reviews"
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="reviews"
+    )
+    rating = models.IntegerField()
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Product review"
+        verbose_name_plural = "Product reviews"
+
+    def __str__(self):
+        return f"Review by {self.user.full_name} for {self.product.name}"

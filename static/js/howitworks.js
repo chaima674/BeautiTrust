@@ -4,42 +4,46 @@ const prefForm = document.querySelector('.preference-form');
 if (prefForm) {
     prefForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        
         const name = this.querySelector('input[type="text"]').value;
         const preference = this.querySelector('select').value;
 
         if (name && preference && preference !== 'Choose Your Preferences') {
-            // FIRST: Save to localStorage with correct keys
+            // Save to localStorage for immediate use (filtering on home page)
             localStorage.setItem('prefName', name);
             localStorage.setItem('prefChoice', preference);
-            
-            console.log('Saved to localStorage:', name, preference);
-            
+
             // Check if user is logged in
             fetch('/api/check-auth/')
-                .then(response => response.json())
-                .then(authData => {
-                    if (!authData.is_authenticated) {
-                        // Not logged in - redirect to login with preference in URL
-                        window.location.href = `/login/?pref=${encodeURIComponent(preference)}&name=${encodeURIComponent(name)}`;
-                        return;
+                .then(res => res.json())
+                .then(auth => {
+                    if (auth.is_authenticated) {
+                        // User is logged in – save to database
+                        fetch('/api/save-user-preference/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name, preference })
+                        })
+                        .then(() => {
+                            alert(`Thank you, ${name}! Your preferences for "${preference}" are saved.`);
+                            window.location.href = '/home/';
+                        })
+                        .catch(() => {
+                            alert("Preferences saved locally. Could not save to database.");
+                            window.location.href = '/home/';
+                        });
+                    } else {
+                        // Not logged in – store pending preference and redirect to login
+                        sessionStorage.setItem('pendingPreference', JSON.stringify({ name, preference }));
+                        alert("Please login to save your preferences permanently.");
+                        window.location.href = '/login/?next=/home/';
                     }
-                    
-                    // Logged in - save to session via API
-                    fetch('/api/save-preference/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ name: name, preference: preference })
-                    }).then(() => {
-                        alert(`Thank you, ${name}! Your preferences for "${preference}" are saved.`);
-                        this.reset();
-                        window.location.href = '/home/';
-                    });
+                })
+                .catch(() => {
+                    // Fallback if auth check fails
+                    window.location.href = '/home/';
                 });
         } else {
-            alert("Please fill out your name and choose a preference.");
+            alert("Please enter your name and select a valid preference.");
         }
     });
 }
