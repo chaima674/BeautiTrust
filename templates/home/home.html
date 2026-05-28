@@ -86,7 +86,7 @@
             </div>
         </div>
 
-        <!-- Third Part: Image Left (AUTHENTICATION CHECK ADDED) -->
+        <!-- Third Part: Image Left -->
         <div class="section" id="personalized-advice">
             <div class="content-item left">
                 <img src="{% static 'images/advice.jpg' %}" alt="Advice">
@@ -165,7 +165,7 @@
             window.location.href = '/logout/';
         }
         
-        // Get preference from Django session (passed from views.py)
+        // Get preference from Django session 
         const prefChoice = "{{ prefChoice|default:'' }}";
         const prefName = "{{ prefName|default:'' }}";
         

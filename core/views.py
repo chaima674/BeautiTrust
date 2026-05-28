@@ -42,7 +42,7 @@ def login_view(request):
             if check_password(password, user.password_hash):
                 request.session['user_id'] = user.id
                 
-                # Save preference if it exists in URL
+                # Save preference
                 if pref and name:
                     request.session['prefChoice'] = pref
                     request.session['prefName'] = name

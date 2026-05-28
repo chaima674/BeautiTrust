@@ -104,24 +104,7 @@
                 });
         }
         
-        // DELETE THIS ENTIRE FUNCTION - OR KEEP IT (it won't be used since button is removed)
-        // function addToCartFromDetail() {
-        //     fetch('/api/product/' + productId + '/')
-        //         .then(res => res.json())
-        //         .then(product => {
-        //             fetch('/api/check-auth/')
-        //                 .then(r => r.json())
-        //                 .then(auth => {
-        //                     if (!auth.is_authenticated) {
-        //                         alert("Please login to add to cart!");
-        //                         window.location.href = '/login/';
-        //                         return;
-        //                     }
-        //                     alert(product.name + ' added to cart!');
-        //                 });
-        //         });
-        // }
-        
+   
         fetch('/api/product/' + productId + '/')
             .then(res => res.json())
             .then(product => {

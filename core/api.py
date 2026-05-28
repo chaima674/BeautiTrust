@@ -4,14 +4,13 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-# ========== SPOTS & PRODUCTS API (FIXED WITH SERVICES) ==========
+# ========== SPOTS & PRODUCTS API ==========
 
 def get_spots(request):
     """Get all beauty spots with their services"""
     spots = BeautySpot.objects.all()
     data = []
     for spot in spots:
-        # Get all services for this spot from the Service model
         services = list(Service.objects.filter(beautyspot=spot).values_list('name', flat=True))
         data.append({
             'id': spot.id,
@@ -103,14 +102,8 @@ def get_spot_detail(request, spot_id):
     """Get detailed information about a specific beauty spot"""
     try:
         spot = BeautySpot.objects.get(id=spot_id)
-        
-        # Get services for this spot
         services = list(Service.objects.filter(beautyspot=spot).values('id', 'name', 'description', 'price'))
-        
-        # Get reviews for this spot
         reviews = list(spot.reviews.values('id', 'user__full_name', 'rating', 'comment', 'created_at'))
-        
-        # Calculate average rating
         if reviews:
             avg_rating = sum(r['rating'] for r in reviews) / len(reviews)
         else:
@@ -131,7 +124,6 @@ def get_spot_detail(request, spot_id):
             'reviews': reviews,
             'review_count': len(reviews)
         }
-        
         return JsonResponse(spot_data, safe=False)
     except BeautySpot.DoesNotExist:
         return JsonResponse({'error': 'Spot not found'}, status=404)
@@ -139,17 +131,12 @@ def get_spot_detail(request, spot_id):
 # ========== PRODUCT DETAIL API ==========
 
 def get_product_detail(request, product_id):
-    """Get detailed information about a specific product including reviews"""
     from .models import ProductReview
     try:
         product = Product.objects.get(id=product_id)
-        
-        # Get reviews for this product
         reviews = list(ProductReview.objects.filter(product_id=product_id).values(
             'id', 'user__full_name', 'rating', 'comment', 'created_at'
         ))
-        
-        # Calculate average rating
         if reviews:
             avg_rating = sum(r['rating'] for r in reviews) / len(reviews)
         else:
@@ -170,7 +157,6 @@ def get_product_detail(request, product_id):
             'provider_city': product.provider.city if product.provider else '',
             'reviews': reviews,
         }
-        
         return JsonResponse(product_data, safe=False)
     except Product.DoesNotExist:
         return JsonResponse({'error': 'Product not found'}, status=404)
@@ -178,7 +164,6 @@ def get_product_detail(request, product_id):
 # ========== REVIEWS API ==========
 
 def get_reviews(request):
-    """Get all reviews for beauty spots"""
     from .models import Review
     reviews = list(Review.objects.values(
         'id', 'user__full_name', 'beautyspot__name', 'beautyspot_id', 'rating', 'comment', 'created_at'
@@ -187,7 +172,6 @@ def get_reviews(request):
 
 @csrf_exempt
 def add_review(request):
-    """Add a new review (only for logged-in users)"""
     from .models import Review
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Invalid request method'})
@@ -211,7 +195,6 @@ def add_review(request):
 # ========== PRODUCT REVIEWS API ==========
 
 def get_product_reviews(request):
-    """Get all reviews for products"""
     from .models import ProductReview
     reviews = list(ProductReview.objects.values(
         'id', 'user__full_name', 'product__name', 'product_id', 'rating', 'comment', 'created_at'
@@ -220,7 +203,6 @@ def get_product_reviews(request):
 
 @csrf_exempt
 def add_product_review(request):
-    """Add a new product review (only for logged-in users)"""
     from .models import ProductReview
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Invalid request method'})
@@ -244,7 +226,6 @@ def add_product_review(request):
 # ========== ADVICE RESPONSES API ==========
 
 def get_advice_responses(request):
-    """Get all advice responses"""
     from .models import AdviceResponse
     responses = list(AdviceResponse.objects.values(
         'id', 'user__full_name', 'question_text', 'answer_text', 'created_at'
@@ -265,7 +246,6 @@ def save_advice_response(request):
         data = json.loads(request.body)
         question_text = data.get('question_text')
         answer_text = data.get('answer_text')
-        
         response = AdviceResponse.objects.create(
             user_id=user_id,
             question_text=question_text,
@@ -317,9 +297,14 @@ def add_to_cart(request):
         if item_type == 'spot':
             item = BeautySpot.objects.get(id=item_id)
             Cart.objects.create(user_id=user_id, beautyspot=item, quantity=1)
-        else:
+        elif item_type == 'product':
             item = Product.objects.get(id=item_id)
             Cart.objects.create(user_id=user_id, product=item, quantity=1)
+        elif item_type == 'service':
+            item = Service.objects.get(id=item_id)
+            Cart.objects.create(user_id=user_id, service=item, quantity=1)
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid item_type'})
         
         return JsonResponse({'success': True})
     except Exception as e:
@@ -353,7 +338,7 @@ def add_to_wishlist(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-# ========== TRANSACTION API (FIXED) ==========
+# ========== TRANSACTION API ==========
 
 @csrf_exempt
 def create_transaction(request):
@@ -372,8 +357,13 @@ def create_transaction(request):
         price = data.get('price', 50)
         commission = price * 0.10
         
-        # Map 'spot' to 'service' because Transaction model only accepts 'product' or 'service'
-        mapped_type = 'service' if item_type == 'spot' else item_type
+        # Determine transaction_type (must be 'product' or 'service')
+        if item_type == 'product':
+            mapped_type = 'product'
+        elif item_type == 'service' or item_type == 'spot':
+            mapped_type = 'service'
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid item_type for transaction'})
         
         transaction = Transaction.objects.create(
             user_id=user_id,
@@ -386,7 +376,10 @@ def create_transaction(request):
         if item_type == 'product':
             product = Product.objects.get(id=item_id)
             transaction.product = product
-        else:
+        elif item_type == 'service':
+            service = Service.objects.get(id=item_id)
+            transaction.service = service
+        else:  # 'spot' fallback (for backward compatibility)
             spot = BeautySpot.objects.get(id=item_id)
             transaction.beautyspot = spot
         
@@ -395,7 +388,7 @@ def create_transaction(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-# ========== GET USER CART & WISHLIST API (UPDATED) ==========
+# ========== GET USER CART & WISHLIST API ==========
 
 def get_user_cart(request):
     """Get current user's cart items including cart item IDs"""
@@ -430,11 +423,11 @@ def get_user_cart(request):
             spot = item.service.beautyspot
             data.append({
                 'cart_item_id': item.id,
-                'id': spot.id,
-                'name': spot.name,
+                'id': item.service.id,
+                'name': item.service.name,
                 'price': float(item.service.price),
                 'image_url': spot.image_url,
-                'type': 'spot',
+                'type': 'service',
                 'service_name': item.service.name,
                 'quantity': item.quantity
             })

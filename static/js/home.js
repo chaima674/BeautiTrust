@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ===== Commission Logic =====
     let platformEarnings = 0;
-    const COMMISSION_RATE = 0.05;
+    const COMMISSION_RATE = 0.10;
 
     // ===== Store original content =====
     const originalContent = {};
@@ -233,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <h3>${spot.name}</h3>
                                         <p>${spot.description}</p>
                                         <div class="card-buttons">
-                                            <button class="cart-btn" data-type="spot" data-id="${spot.id}" style="background:#EF78C4; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer;">🛒</button>
+                                            <button onclick="event.stopPropagation(); alert('Please choose a service to book.'); window.location.href='/spot/${spot.id}/';" style="background:#EF78C4; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer;">📅 Book</button>
                                             <button class="wishlist-btn" data-type="spot" data-id="${spot.id}" style="background:#AD2555; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer;">❤️</button>
                                         </div>
                                     </div>
@@ -241,12 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             });
                             addFinishedButton(container, target);
                             
-                            document.querySelectorAll('.cart-btn').forEach(btn => {
-                                btn.onclick = (e) => {
-                                    e.stopPropagation();
-                                    addToCart(btn.dataset.type, parseInt(btn.dataset.id));
-                                };
-                            });
+                            
                             document.querySelectorAll('.wishlist-btn').forEach(btn => {
                                 btn.onclick = (e) => {
                                     e.stopPropagation();
@@ -324,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         });
                 }
 
-                // ===== Personalized Advice (FIXED: saves answers to backend) =====
+                // ===== Personalized Advice =====
                 if (target === "personalized-advice") {
                     let currentAdviceIndex = 0;
                     // Clear previous answers
@@ -367,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         showAdviceQuestion();
                     };
 
-                    // NEW: Function to save answers to backend (only if logged in)
+                    // Function to save answers to backend (only if logged in)
                     function saveAnswersToBackend() {
                         fetch('/api/check-auth/')
                             .then(res => res.json())
@@ -647,7 +642,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // ===== VIEW CART (UPDATED with transaction creation) =====
+    // ===== VIEW CART =====
     document.querySelector(".fa-shopping-cart").onclick = () => {
         if (cart.length === 0) {
             openModal("Cart", "<p>Your cart is empty.</p>");
@@ -655,15 +650,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         let html = cart.map((item, index) => {
-            const isProduct = item.price !== undefined && item.price !== null;
-            const displayPrice = isProduct ? `${item.price} DT` : 'Pay at salon';
+            // Determine type: product, service, or spot
+            const isProduct = item.type === 'product';
+            const isService = item.type === 'service';
+            const showPrice = (isProduct || isService);
+            const displayPrice = showPrice ? `${item.price} DT` : 'Pay at salon';
             const buttonText = isProduct ? 'Buy Now' : 'Confirm Booking';
+            // Send the correct item_type to the transaction API
+            const itemTypeForApi = isProduct ? 'product' : (isService ? 'service' : 'spot');
             
             return `
                 <div class="cart-item" style="margin-bottom:10px; padding:10px; border:1px solid #ddd; border-radius:5px;">
                     <p><strong>${item.name}</strong> - ${displayPrice}</p>
                     <button class="remove-from-cart" data-cart-id="${item.cart_item_id}" data-index="${index}" style="margin-top:8px; padding:5px 10px; background:#ff4444; color:white; border:none; border-radius:5px; cursor:pointer;">Remove</button>
-                    <button class="checkout-btn" data-cart-id="${item.cart_item_id}" data-index="${index}" data-type="${isProduct ? 'product' : 'spot'}" style="margin-top:8px; margin-left:5px; padding:5px 10px; background:#EF78C4; color:white; border:none; border-radius:5px; cursor:pointer;">${buttonText}</button>
+                    <button class="checkout-btn" data-cart-id="${item.cart_item_id}" data-index="${index}" data-type="${itemTypeForApi}" style="margin-top:8px; margin-left:5px; padding:5px 10px; background:#EF78C4; color:white; border:none; border-radius:5px; cursor:pointer;">${buttonText}</button>
                 </div>
             `;
         }).join("");
@@ -711,14 +711,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 const cartItemId = btn.dataset.cartId;
                 const index = parseInt(btn.dataset.index);
                 const item = cart[index];
-                const isProduct = btn.dataset.type === 'product';
+                const itemType = btn.dataset.type; // 'product', 'service', or 'spot'
                 
                 // 1. Create transaction record
                 const transactionRes = await fetch('/api/create-transaction/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        item_type: isProduct ? 'product' : 'spot',
+                        item_type: itemType,
                         item_id: item.id,
                         price: item.price || 50
                     })
@@ -743,9 +743,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         updateCartBadge();
                         modal.style.display = "none";
                         
-                        if (isProduct) {
+                        if (itemType === 'product') {
                             alert(`🛍️ Purchase completed for ${item.name} - ${item.price} DT`);
+                        } else if (itemType === 'service') {
+                            platformEarnings += (item.price || 0) * COMMISSION_RATE;
+                            alert(`✅ Booking confirmed for ${item.name} - ${item.price} DT. You will pay at the salon.`);
                         } else {
+                            // legacy spot
                             platformEarnings += (item.price || 0) * COMMISSION_RATE;
                             alert(`✅ Booking confirmed for ${item.name}! You will pay at the salon.`);
                         }

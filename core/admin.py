@@ -66,7 +66,7 @@ class CartAdmin(admin.ModelAdmin):
 # ========== Transaction Admin ==========
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'transaction_type', 'total_price', 'status', 'transaction_date')
+    list_display = ('id', 'user', 'transaction_type', 'total_price', 'commission_amount', 'status', 'transaction_date')
     list_filter = ('status', 'transaction_type', 'transaction_date')
     search_fields = ('user__full_name',)
     readonly_fields = ('transaction_date',)
@@ -78,7 +78,7 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ('rating', 'created_at')
     search_fields = ('comment', 'user__full_name')
 
-# ========== Product Review Admin (NEW) ==========
+# ========== Product Review Admin ==========
 @admin.register(ProductReview)
 class ProductReviewAdmin(admin.ModelAdmin):
     list_display = ('user', 'product', 'rating', 'created_at')

@@ -95,6 +95,36 @@
                 });
         }
         
+        //Book a specific service
+        function addServiceToCart(serviceId, serviceName, servicePrice) {
+            fetch('/api/check-auth/')
+                .then(res => res.json())
+                .then(auth => {
+                    if (!auth.is_authenticated) {
+                        alert("Please login to book a service!");
+                        window.location.href = '/login/';
+                        return;
+                    }
+                    fetch('/api/add-to-cart/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            item_type: 'service',
+                            item_id: serviceId
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(`✅ ${serviceName} added to cart (${servicePrice} DT)`);
+                        } else {
+                            alert("Error: " + data.error);
+                        }
+                    })
+                    .catch(err => alert("Request failed: " + err));
+                });
+        }
+        
         fetch('/api/spot/' + spotId + '/')
             .then(res => res.json())
             .then(spot => {
@@ -102,7 +132,14 @@
                 if (spot.services && spot.services.length > 0) {
                     servicesHtml = '<h3>Services</h3>';
                     for (let i = 0; i < spot.services.length; i++) {
-                        servicesHtml += '<div class="service"><strong>' + spot.services[i].name + '</strong> - ' + spot.services[i].price + ' DT<br><small>' + (spot.services[i].description || '') + '</small></div>';
+                        let service = spot.services[i];
+                        servicesHtml += `
+                            <div class="service">
+                                <strong>${service.name}</strong> - ${service.price} DT<br>
+                                <small>${service.description || ''}</small><br>
+                                <button onclick="addServiceToCart(${service.id}, '${service.name.replace(/'/g, "\\'")}', ${service.price})" style="margin-top: 5px; background:#AD2555; padding:5px 10px;">📅 Book this service</button>
+                            </div>
+                        `;
                     }
                 }
                 
